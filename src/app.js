@@ -7,7 +7,7 @@ const app = express()
 // ✅ Allowed origins (IMPORTANT)
 const allowedOrigins = [
     "http://localhost:5173",
-    "resume-builder-frontend-git-main-ghanshyam-9946s-projects.vercel.app"
+    "resume-builder-frontend-ashy-nine.vercel.app"
 ]
 
 // ✅ CORS setup (FINAL FIX)
