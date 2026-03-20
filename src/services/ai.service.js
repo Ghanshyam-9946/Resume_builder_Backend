@@ -63,7 +63,7 @@ async function generatePdfFromHtml(htmlContent) {
 
         const browser = await puppeteer.launch({
             args: chromium.args,
-            executablePath: executablePath || "/usr/bin/chromium", // 🔥 fallback fix
+            executablePath: executablePath, // 🔥 fallback fix
             headless: true,
         })
 
