@@ -4,13 +4,8 @@ const cors = require("cors")
 
 const app = express()
 
-const allowedOrigins = [
-    "http://localhost:5173",
-    "https://resume-builder-frontend-ashy-nine.vercel.app"
-]
-
 app.use(cors({
-    origin: allowedOrigins,
+    origin: true,
     credentials: true
 }))
 
