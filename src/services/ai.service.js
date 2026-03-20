@@ -1,8 +1,7 @@
 const { GoogleGenAI } = require("@google/genai")
 const { z } = require("zod")
 const { zodToJsonSchema } = require("zod-to-json-schema")
-const chromium = require("chrome-aws-lambda")
-const puppeteer = require("puppeteer-core")
+const puppeteer = require("puppeteer")
 
 const ai = new GoogleGenAI({
     apiKey: process.env.GOOGLE_GENAI_API_KEY
@@ -59,11 +58,8 @@ async function generateInterviewReport({ resume, selfDescription, jobDescription
 
 async function generatePdfFromHtml(htmlContent) {
     try {
-        const executablePath = await chromium.executablePath
-
         const browser = await puppeteer.launch({
-            args: chromium.args,
-            executablePath: executablePath, // 🔥 fallback fix
+            args: ["--no-sandbox", "--disable-setuid-sandbox"],
             headless: true,
         })
 
@@ -87,7 +83,6 @@ async function generatePdfFromHtml(htmlContent) {
         throw err
     }
 }
-
 async function generateResumePdf({ resume, selfDescription, jobDescription }) {
 
     const resumePdfSchema = z.object({
