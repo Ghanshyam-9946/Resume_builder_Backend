@@ -34,6 +34,7 @@ async function generateInterViewReportController(req, res) {
 
 }
 
+
 /**
  * @description Controller to get interview report by interviewId.
  */
