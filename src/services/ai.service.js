@@ -77,6 +77,12 @@ Job Description: ${jobDescription}`
 
 async function generatePdfFromHtml(htmlContent) {
     try {
+
+        // 🔥 FIX
+        if (typeof htmlContent !== "string") {
+            htmlContent = JSON.stringify(htmlContent)
+        }
+
         const pdfDoc = await PDFDocument.create()
         const page = pdfDoc.addPage()
 
@@ -84,13 +90,9 @@ async function generatePdfFromHtml(htmlContent) {
 
         const { width, height } = page.getSize()
 
-        // 🔥 strip HTML tags → plain text
         const text = htmlContent
-            .replace(/<[^>]*>/g, '')   // remove HTML tags
-            .replace(/\s+/g, ' ')     // clean spaces
-
-        const fontSize = 12
-        const lineHeight = 16
+            .replace(/<[^>]*>/g, '')
+            .replace(/\s+/g, ' ')
 
         let y = height - 40
 
@@ -98,10 +100,10 @@ async function generatePdfFromHtml(htmlContent) {
             page.drawText(line, {
                 x: 40,
                 y: y,
-                size: fontSize,
+                size: 12,
                 font: font,
             })
-            y -= lineHeight
+            y -= 16
         })
 
         const pdfBytes = await pdfDoc.save()
