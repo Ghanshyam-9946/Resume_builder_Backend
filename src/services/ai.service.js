@@ -83,25 +83,41 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
         html: z.string().describe("The HTML content of the resume which can be converted to PDF using any library like puppeteer")
     })
 
-const prompt = `
-Generate a professional ATS-friendly resume in CLEAN HTML format.
+   const prompt = `
+Create a PROFESSIONAL RESUME in CLEAN HTML.
 
 STRICT RULES:
-- Use proper HTML structure (div, h1, h2, p, ul, li)
-- Use inline CSS for styling
-- Make it look like a modern professional resume
-- Use sections:
-  - Header (Name, Phone, Email, LinkedIn)
-  - Professional Summary
-  - Technical Skills
-  - Projects
-  - Education
-  - Certifications
-- Use spacing, bold headings, clean layout
+- MUST use proper HTML tags (h1, h2, p, ul, li)
+- MUST use inline CSS
 - DO NOT return plain text
 - DO NOT return markdown
 - ONLY return valid HTML
 
+FORMAT:
+
+<div style="font-family: Arial; padding:20px;">
+
+<h1>Full Name</h1>
+<p>Phone | Email | Location | LinkedIn</p>
+
+<h2>Professional Summary</h2>
+<p>...</p>
+
+<h2>Technical Skills</h2>
+<ul><li>...</li></ul>
+
+<h2>Projects</h2>
+<ul><li>...</li></ul>
+
+<h2>Education</h2>
+<p>...</p>
+
+<h2>Certifications</h2>
+<ul><li>...</li></ul>
+
+</div>
+
+DATA:
 Resume: ${resume}
 Self Description: ${selfDescription}
 Job Description: ${jobDescription}
