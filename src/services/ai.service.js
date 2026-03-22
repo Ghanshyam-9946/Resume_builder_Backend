@@ -168,5 +168,6 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
     })
 
     return pdfBuffer
+     return Buffer.from("Hello PDF")
 }
 module.exports = { generateInterviewReport, generateResumePdf }
