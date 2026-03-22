@@ -162,7 +162,7 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
     console.log("HTML LENGTH:", htmlContent.length)
 
     const pdfBuffer = await generatePdfFromHtml({
-        resume,
+    resume,
     selfDescription,
     jobDescription
     })
