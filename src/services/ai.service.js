@@ -9,24 +9,6 @@ const ai = new GoogleGenAI({
 
 /* ---------------- SAFE JSON PARSER ---------------- */
 
-function safeJsonParse(text) {
-    try {
-        let cleaned = text.trim()
-
-        if (cleaned.startsWith("```")) {
-            cleaned = cleaned.replace(/```json|```/g, "").trim()
-        }
-
-        return JSON.parse(cleaned)
-
-    } catch (err) {
-        console.error("JSON ERROR:", text)
-        throw new Error("Invalid JSON from AI")
-    }
-}
-
-/* ---------------- ORIGINAL SCHEMA (UNCHANGED) ---------------- */
-
 const interviewReportSchema = z.object({
     matchScore: z.number().describe("A score between 0 and 100 indicating how well the candidate's profile matches the job describe"),
     technicalQuestions: z.array(z.object({
@@ -46,16 +28,15 @@ const interviewReportSchema = z.object({
     preparationPlan: z.array(z.object({
         day: z.number().describe("The day number in the preparation plan, starting from 1"),
         focus: z.string().describe("The main focus of this day in the preparation plan, e.g. data structures, system design, mock interviews etc."),
-        tasks: z.array(z.string()).describe("List of tasks to be done on this day to follow the preparation plan")
-    })).describe("A day-wise preparation plan"),
+        tasks: z.array(z.string()).describe("List of tasks to be done on this day to follow the preparation plan, e.g. read a specific book or article, solve a set of problems, watch a video etc.")
+    })).describe("A day-wise preparation plan for the candidate to follow in order to prepare for the interview effectively"),
     title: z.string().describe("The title of the job for which the interview report is generated"),
 })
 
-/* ---------------- INTERVIEW REPORT ---------------- */
-
 async function generateInterviewReport({ resume, selfDescription, jobDescription }) {
 
-      const prompt = `Generate an interview report for a candidate with the following details:
+
+    const prompt = `Generate an interview report for a candidate with the following details:
                         Resume: ${resume}
                         Self Description: ${selfDescription}
                         Job Description: ${jobDescription}
@@ -70,54 +51,35 @@ async function generateInterviewReport({ resume, selfDescription, jobDescription
         }
     })
 
-    return safeJsonParse(response.text)
+    return JSON.parse(response.text)
+
+
 }
 
-/* ---------------- PDF GENERATOR ---------------- */
+
 
 async function generatePdfFromHtml(htmlContent) {
-    try {
+    const browser = await puppeteer.launch()
+    const page = await browser.newPage();
+    await page.setContent(htmlContent, { waitUntil: "networkidle0" })
 
-        // 🔥 FIX
-        if (typeof htmlContent !== "string") {
-            htmlContent = JSON.stringify(htmlContent)
+    const pdfBuffer = await page.pdf({
+        format: "A4", margin: {
+            top: "20mm",
+            bottom: "20mm",
+            left: "15mm",
+            right: "15mm"
         }
+    })
 
-        const pdfDoc = await PDFDocument.create()
-        const page = pdfDoc.addPage()
+    await browser.close()
 
-        const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
-
-        const { width, height } = page.getSize()
-
-        const text = htmlContent
-            .replace(/<[^>]*>/g, '')
-            .replace(/\s+/g, ' ')
-
-        let y = height - 40
-
-        text.match(/.{1,90}/g).forEach(line => {
-            page.drawText(line, {
-                x: 40,
-                y: y,
-                size: 12,
-                font: font,
-            })
-            y -= 16
-        })
-
-        const pdfBytes = await pdfDoc.save()
-       return Buffer.from(pdfBytes)
-
-    } catch (err) {
-        console.error("PDF ERROR:", err)
-        throw err
-    }
+    return pdfBuffer
 }
-/* ---------------- RESUME PDF ---------------- */
 
 async function generateResumePdf({ resume, selfDescription, jobDescription }) {
-const resumePdfSchema = z.object({
+
+    const resumePdfSchema = z.object({
         html: z.string().describe("The HTML content of the resume which can be converted to PDF using any library like puppeteer")
     })
 
@@ -144,14 +106,11 @@ const resumePdfSchema = z.object({
     })
 
 
+    const jsonContent = JSON.parse(response.text)
 
-    const pdfBuffer = await generatePdfFromHtml({
-    resume,
-    selfDescription,
-    jobDescription
-    })
+    const pdfBuffer = await generatePdfFromHtml(jsonContent.html)
 
     return pdfBuffer
-    
+
 }
 module.exports = { generateInterviewReport, generateResumePdf }
