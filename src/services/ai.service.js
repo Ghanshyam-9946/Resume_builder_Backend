@@ -107,7 +107,7 @@ async function generatePdfFromHtml(htmlContent) {
         })
 
         const pdfBytes = await pdfDoc.save()
-        return pdfBytes
+       return Buffer.from(pdfBytes)
 
     } catch (err) {
         console.error("PDF ERROR:", err)
