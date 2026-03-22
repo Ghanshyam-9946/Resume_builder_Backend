@@ -104,17 +104,30 @@ async function generatePdfFromHtml(htmlContent) {
 
 async function generateResumePdf({ resume, selfDescription, jobDescription }) {
 
-    const resumePdfSchema = z.object({
-        html: z.string()
+    const schema = z.object({
+        name: z.string(),
+        summary: z.string(),
+        skills: z.array(z.string()),
+        projects: z.array(z.object({
+            title: z.string(),
+            description: z.string()
+        })),
+        education: z.string()
     })
 
     const prompt = `
-Generate a COMPLETE resume in HTML.
+Extract and enhance resume into structured JSON.
 
-STRICT:
 Return ONLY JSON:
+
 {
- "html": "<!DOCTYPE html><html><head><style>...</style></head><body>...</body></html>"
+  "name": "",
+  "summary": "",
+  "skills": [],
+  "projects": [
+    { "title": "", "description": "" }
+  ],
+  "education": ""
 }
 
 Resume: ${resume}
@@ -123,24 +136,54 @@ Job Description: ${jobDescription}
 `
 
     const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview", // same as tera
+        model: "gemini-3-flash-preview",
         contents: prompt,
         config: {
             responseMimeType: "application/json",
-            responseSchema: zodToJsonSchema(resumePdfSchema),
+            responseSchema: zodToJsonSchema(schema),
         }
     })
 
-    const jsonContent = safeJsonParse(response.text)
+    const data = safeJsonParse(response.text)
 
-    if (!jsonContent.html || jsonContent.html.length < 100) {
-        console.error("HTML RECEIVED:", jsonContent.html)
-        throw new Error("Invalid or empty HTML from AI")
-    }
+    // 🔥 HTML TEMPLATE (CONTROLLED, NEVER BLANK)
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: Arial; padding: 30px; color: black; }
+            h1 { margin-bottom: 5px; }
+            h2 { border-bottom: 1px solid #ccc; margin-top: 20px; }
+            ul { margin: 5px 0; }
+        </style>
+    </head>
+    <body>
 
-    const pdfBuffer = await generatePdfFromHtml(jsonContent.html)
+        <h1>${data.name}</h1>
+
+        <h2>PROFESSIONAL SUMMARY</h2>
+        <p>${data.summary}</p>
+
+        <h2>SKILLS</h2>
+        <ul>
+            ${data.skills.map(skill => `<li>${skill}</li>`).join("")}
+        </ul>
+
+        <h2>PROJECTS</h2>
+        ${data.projects.map(p => `
+            <p><strong>${p.title}</strong><br>${p.description}</p>
+        `).join("")}
+
+        <h2>EDUCATION</h2>
+        <p>${data.education}</p>
+
+    </body>
+    </html>
+    `
+
+    const pdfBuffer = await generatePdfFromHtml(htmlContent)
 
     return pdfBuffer
 }
-
 module.exports = { generateInterviewReport, generateResumePdf }
