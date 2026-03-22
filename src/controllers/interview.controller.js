@@ -103,12 +103,11 @@ async function generateResumePdfController(req, res) {
             "Content-Disposition": `attachment; filename=resume.pdf`
         })
 
-        res.setHeader("Content-Type", "application/pdf")
-res.setHeader("Content-Disposition", `attachment; filename=resume.pdf`)
-res.setHeader("Content-Length", pdfBuffer.length)
+res.setHeader("Content-Type", "application/pdf")
+res.setHeader("Content-Disposition", "attachment; filename=resume.pdf")
+res.setHeader("Content-Length", Buffer.from(pdfBuffer).length)
 
-res.end(pdfBuffer)
-
+res.end(Buffer.from(pdfBuffer))
         console.log("STEP 5 DONE")
 
     } catch (err) {
