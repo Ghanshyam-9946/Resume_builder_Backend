@@ -104,83 +104,48 @@ async function generatePdfFromHtml(htmlContent) {
 
 async function generateResumePdf({ resume, selfDescription, jobDescription }) {
 
-    const schema = z.object({
-        name: z.string(),
-        summary: z.string(),
-        skills: z.array(z.string()),
-        projects: z.array(z.object({
-            title: z.string(),
-            description: z.string()
-        })),
-        education: z.string()
-    })
-
-    const prompt = `
-Extract and enhance resume into structured JSON.
-
-Return ONLY JSON:
-
-{
-  "name": "",
-  "summary": "",
-  "skills": [],
-  "projects": [
-    { "title": "", "description": "" }
-  ],
-  "education": ""
-}
-
-Resume: ${resume}
-Self Description: ${selfDescription}
-Job Description: ${jobDescription}
-`
-
-    const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: zodToJsonSchema(schema),
-        }
-    })
-
-    const data = safeJsonParse(response.text)
-
-    // 🔥 HTML TEMPLATE (CONTROLLED, NEVER BLANK)
     const htmlContent = `
     <!DOCTYPE html>
     <html>
     <head>
+        <meta charset="UTF-8">
         <style>
-            body { font-family: Arial; padding: 30px; color: black; }
-            h1 { margin-bottom: 5px; }
-            h2 { border-bottom: 1px solid #ccc; margin-top: 20px; }
-            ul { margin: 5px 0; }
+            body {
+                font-family: Arial, sans-serif;
+                padding: 40px;
+                color: black;
+                line-height: 1.6;
+            }
+            h1 { font-size: 26px; }
+            h2 {
+                margin-top: 20px;
+                border-bottom: 1px solid #ccc;
+            }
+            p {
+                font-size: 14px;
+                white-space: pre-wrap;
+            }
         </style>
     </head>
+
     <body>
 
-        <h1>${data.name}</h1>
+        <h1>Generated Resume</h1>
 
-        <h2>PROFESSIONAL SUMMARY</h2>
-        <p>${data.summary}</p>
+        <h2>Self Description</h2>
+        <p>${selfDescription || "No data"}</p>
 
-        <h2>SKILLS</h2>
-        <ul>
-            ${data.skills.map(skill => `<li>${skill}</li>`).join("")}
-        </ul>
+        <h2>Resume Content</h2>
+        <p>${resume || "No resume data"}</p>
 
-        <h2>PROJECTS</h2>
-        ${data.projects.map(p => `
-            <p><strong>${p.title}</strong><br>${p.description}</p>
-        `).join("")}
-
-        <h2>EDUCATION</h2>
-        <p>${data.education}</p>
+        <h2>Target Job</h2>
+        <p>${jobDescription || "No job description"}</p>
 
     </body>
     </html>
     `
+
+    console.log("HTML LENGTH:", htmlContent.length)
 
     const pdfBuffer = await generatePdfFromHtml(htmlContent)
 
