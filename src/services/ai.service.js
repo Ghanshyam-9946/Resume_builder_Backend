@@ -1,7 +1,7 @@
 const { GoogleGenAI } = require("@google/genai")
 const { z } = require("zod")
 const { zodToJsonSchema } = require("zod-to-json-schema")
-const pdf = require("html-pdf-node")
+const { PDFDocument, StandardFonts } = require('pdf-lib')
 
 const ai = new GoogleGenAI({
     apiKey: process.env.GOOGLE_GENAI_API_KEY
@@ -77,29 +77,41 @@ Job Description: ${jobDescription}`
 
 async function generatePdfFromHtml(htmlContent) {
     try {
-        const file = { content: htmlContent }
+        const pdfDoc = await PDFDocument.create()
+        const page = pdfDoc.addPage()
 
-        const options = {
-            format: "A4",
-            printBackground: true,
-            margin: {
-                top: "20mm",
-                bottom: "20mm",
-                left: "15mm",
-                right: "15mm"
-            }
-        }
+        const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
 
-        const pdfBuffer = await pdf.generatePdf(file, options)
+        const { width, height } = page.getSize()
 
-        return pdfBuffer
+        // 🔥 strip HTML tags → plain text
+        const text = htmlContent
+            .replace(/<[^>]*>/g, '')   // remove HTML tags
+            .replace(/\s+/g, ' ')     // clean spaces
+
+        const fontSize = 12
+        const lineHeight = 16
+
+        let y = height - 40
+
+        text.match(/.{1,90}/g).forEach(line => {
+            page.drawText(line, {
+                x: 40,
+                y: y,
+                size: fontSize,
+                font: font,
+            })
+            y -= lineHeight
+        })
+
+        const pdfBytes = await pdfDoc.save()
+        return pdfBytes
 
     } catch (err) {
         console.error("PDF ERROR:", err)
         throw err
     }
 }
-
 /* ---------------- RESUME PDF ---------------- */
 
 async function generateResumePdf({ resume, selfDescription, jobDescription }) {
@@ -147,7 +159,11 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
 
     console.log("HTML LENGTH:", htmlContent.length)
 
-    const pdfBuffer = await generatePdfFromHtml(htmlContent)
+    const pdfBuffer = await generatePdfFromHtml({
+        resume,
+    selfDescription,
+    jobDescription
+    })
 
     return pdfBuffer
 }
