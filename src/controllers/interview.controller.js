@@ -74,27 +74,21 @@ async function getAllInterviewReportsController(req, res) {
  */
 async function generateResumePdfController(req, res) {
     try {
-        console.log("STEP 1: controller hit")
+        console.log("STEP 1")
 
         const { interviewReportId } = req.params
 
         const interviewReport = await interviewReportModel.findById(interviewReportId)
 
-        if (!interviewReport) {
-            return res.status(404).json({
-                message: "Interview report not found."
-            })
-        }
+        console.log("STEP 2", interviewReport)
 
-        console.log("STEP 2: data fetched")
+        if (!interviewReport) {
+            return res.status(404).json({ message: "Not found" })
+        }
 
         const { resume, jobDescription, selfDescription } = interviewReport
 
-        if (!resume || !jobDescription || !selfDescription) {
-            throw new Error("Missing required fields in DB")
-        }
-
-        console.log("STEP 3: generating PDF")
+        console.log("STEP 3", resume?.length, selfDescription?.length, jobDescription?.length)
 
         const pdfBuffer = await generateResumePdf({
             resume,
@@ -102,22 +96,20 @@ async function generateResumePdfController(req, res) {
             selfDescription
         })
 
-        console.log("STEP 4: PDF generated")
+        console.log("STEP 4 PDF CREATED")
 
         res.set({
             "Content-Type": "application/pdf",
-            "Content-Disposition": `attachment; filename=resume_${interviewReportId}.pdf`
+            "Content-Disposition": `attachment; filename=resume.pdf`
         })
 
         res.send(pdfBuffer)
 
-        console.log("STEP 5: response sent")
+        console.log("STEP 5 DONE")
 
     } catch (err) {
-        console.error("🔥 FINAL ERROR:", err)
-        res.status(500).json({
-            error: err.message
-        })
+        console.error("🔥 REAL ERROR:", err)
+        res.status(500).json({ error: err.message })
     }
 }
 module.exports = { generateInterViewReportController, getInterviewReportByIdController, getAllInterviewReportsController, generateResumePdfController }
